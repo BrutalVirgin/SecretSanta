@@ -1,47 +1,53 @@
+import e from "express"
 import express from "express"
-import { IsString, validate } from "class-validator"
-import { plainToInstance } from "class-transformer"
-import 'reflect-metadata';
+import sqlite3 from "sqlite3"
+import { stringify } from "uuid"
 
 
 // зарегистрировать участника имя, фамилия, список побажань
-
-class CreateUserDTO {
-    @IsString()
-    firstName!: string
-
-    @IsString()
-    lastName!: string
-
-    @IsString({ each: true })
-    wishList!: string[]
-}
 
 async function main() {
     const app = express()
 
     app.use(express.json())
 
-    app.post("/users", async (req, res) => {
-        const user = plainToInstance(CreateUserDTO, req.body)
-        const validationsErrors = await validate(user)
+    app.post("/users", (req, res) => {
+        const user = req.body
+        if (user.first_name != null && typeof (user.first_name) === "string") {
+            if (user.last_name != null && typeof (user.last_name) === "string") {
+                if (user.wishlist != null && typeof (user.wishlist) === "string") {
 
-        console.log({
-            user,
-            validationsErrors
-        })
-
-        if (validationsErrors.length) {
+                }
+            }
+        } else {
             res.statusCode = 400
-            res.end(JSON.stringify(validationsErrors))
-            return
         }
 
-        res.end("kak nado")
-
     })
+
+    const db = new sqlite3.Database("./database.db",
+        sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+            if (err) return console.error(err)
+
+            console.log("connection is ok")
+        })
+    module.exports.db = db
+
+    // db.run('CREATE TABLE users (id text, first_name text, last_name text, wishlist text)')
+
+    db.run('INSERT INTO users(id, first_name, last_name, wishlist) VALUES(?, ?, ?, ?)',
+        [1, "ASD", "FGFG", "SDF,SDF,SDF,FGHJ"],
+        (err) => {
+            if (err) {
+                return console.log(err.message);
+            }
+            console.log(`Added info`);
+        })
+
+    db.close()
 
     app.listen(3000, () => console.log("runnin"))
 }
 
 main()
+

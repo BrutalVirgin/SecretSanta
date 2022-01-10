@@ -1,6 +1,6 @@
 export interface User {
     id: string,
-    name: string
-    surName: string
-    gifts: string[]
+    first_name: string
+    last_name: string
+    wishlist: string[]
 }
