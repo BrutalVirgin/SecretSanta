@@ -31,7 +31,7 @@ async function main() {
 
             console.log("connection is ok")
         })
-    module.exports.db = db
+    module.exports = db
 
     // db.run('CREATE TABLE users (id text, first_name text, last_name text, wishlist text)')
 
