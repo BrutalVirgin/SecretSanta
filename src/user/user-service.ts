@@ -1,12 +1,14 @@
 import { User } from "./user-interface"
 import { v4 as uuidv4 } from 'uuid'
-import { db } from "../main"
+import sqlite3 from "sqlite3"
 
 type newUserSet = Pick<User, "first_name" | "last_name" | "wishlist">
 
 export class UserService {
 
-    constructor() { }
+    constructor(
+        private readonly db: sqlite3.Database
+    ) { }
 
 
     createUser(user: newUserSet): User {
@@ -17,8 +19,8 @@ export class UserService {
             wishlist: user.wishlist
         }
 
-        db.run('INSERT INTO users(id, first_name, last_name, wishlist) VALUES(?, ?, ?, ?)',
-            [1, "ASD", "FGFG", "SDF,SDF,SDF,FGHJ"],
+        this.db.run('INSERT INTO users(id, first_name, last_name, wishlist) VALUES(?, ?, ?, ?)',
+            [uuidv4(), user.first_name, user.last_name, user.wishlist],
             (err) => {
                 if (err) {
                     return console.log(err.message);
@@ -26,7 +28,7 @@ export class UserService {
                 console.log(`Added info`);
             })
 
-        db.close()
+        this.db.close()
 
         return newUSer
     }
