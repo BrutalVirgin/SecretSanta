@@ -25,7 +25,7 @@ async function main() {
         const user = req.body
         if (user.first_name != null && typeof (user.first_name) === "string") {
             if (user.last_name != null && typeof (user.last_name) === "string") {
-                if (user.wishlist != null && typeof (user.wishlist) === "string") {
+                if (user.wishlist != null && typeof (user.wishlist) === "object") {
                     userService.createUser(req.body)
                 } else {
                     res.statusCode = 400
@@ -37,22 +37,29 @@ async function main() {
         } else {
             res.statusCode = 400
         }
+        res.end()
     })
-
     // db.run('CREATE TABLE users (id text, first_name text, last_name text, wishlist text)')
-
-    // db.run('INSERT INTO users(id, first_name, last_name, wishlist) VALUES(?, ?, ?, ?)',
-    //     [1, "ASD", "FGFG", "SDF,SDF,SDF,FGHJ"],
-    //     (err) => {
-    //         if (err) {
-    //             return console.log(err.message);
-    //         }
-    //         console.log(`Added info`);
-    //     })
-
-    db.close()
+    // db.close()
 
     app.listen(3000, () => console.log("runnin"))
+}
+
+function validation(user: any) {
+    if (user["first_name"] != null && typeof (user.first_name) === "string") {
+        if (user.last_name != null && typeof (user.last_name) === "string") {
+            if (user.wishlist != null && typeof (user.wishlist) === "object") {
+                userService.createUser(req.body)
+            } else {
+                res.statusCode = 400
+                res.send("err")
+            }
+        } else {
+            res.statusCode = 400
+        }
+    } else {
+        res.statusCode = 400
+    }
 }
 
 main()

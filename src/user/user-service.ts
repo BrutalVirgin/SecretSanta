@@ -11,6 +11,7 @@ export class UserService {
     ) { }
 
 
+
     createUser(user: newUserSet): User {
         const newUSer = {
             id: uuidv4(),
@@ -27,9 +28,6 @@ export class UserService {
                 }
                 console.log(`Added info`);
             })
-
-        this.db.close()
-
         return newUSer
     }
 }
