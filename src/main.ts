@@ -3,6 +3,8 @@ import express from "express"
 import sqlite3 from "sqlite3"
 import { stringify } from "uuid"
 import { UserService } from "../src/user/user-service"
+import { Shuffle } from "../shuffle"
+
 
 
 // зарегистрировать участника имя, фамилия, список побажань
@@ -18,47 +20,45 @@ async function main() {
         })
 
     const userService = new UserService(db)
+    const shuffle = new Shuffle(db)
 
     app.use(express.json())
 
     app.post("/users", (req, res) => {
         const user = req.body
-        if (user.first_name != null && typeof (user.first_name) === "string") {
-            if (user.last_name != null && typeof (user.last_name) === "string") {
-                if (user.wishlist != null && typeof (user.wishlist) === "object") {
-                    userService.createUser(req.body)
-                } else {
-                    res.statusCode = 400
-                    res.send("err")
-                }
-            } else {
-                res.statusCode = 400
-            }
+        if (validation(user)) {
+            userService.createUser(req.body)
         } else {
             res.statusCode = 400
+            res.send("err")
         }
+
         res.end()
     })
     // db.run('CREATE TABLE users (id text, first_name text, last_name text, wishlist text)')
-    // db.close()
+
+    app.post("/shuffle", (_req, res) => {
+        shuffle.start()
+
+        res.end()
+    })
 
     app.listen(3000, () => console.log("runnin"))
 }
 
 function validation(user: any) {
     if (user["first_name"] != null && typeof (user.first_name) === "string") {
-        if (user.last_name != null && typeof (user.last_name) === "string") {
-            if (user.wishlist != null && typeof (user.wishlist) === "object") {
-                userService.createUser(req.body)
+        if (user["last_name"] != null && typeof (user.last_name) === "string") {
+            if (user["wishlist"] != null && typeof (user.wishlist) === "object") {
+                return true
             } else {
-                res.statusCode = 400
-                res.send("err")
+                return false
             }
         } else {
-            res.statusCode = 400
+            return false
         }
     } else {
-        res.statusCode = 400
+        return false
     }
 }
 
