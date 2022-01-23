@@ -19,8 +19,9 @@ async function main() {
             console.log("connection is ok")
         })
 
+
     const userService = new UserService(db)
-    const shuffle = new Shuffle(db)
+    const shuffle = new Shuffle(db, userService)
 
     app.use(express.json())
 
@@ -38,7 +39,14 @@ async function main() {
     // db.run('CREATE TABLE users (id text, first_name text, last_name text, wishlist text)')
 
     app.post("/shuffle", (_req, res) => {
-        shuffle.start()
+        var a = shuffle.start()
+
+        res.contentType("json")
+        res.end(JSON.stringify(a))
+    })
+
+    app.get("/users/:id", (req, res) => {
+        userService.getUserWishlist(req.params.id)
 
         res.end()
     })

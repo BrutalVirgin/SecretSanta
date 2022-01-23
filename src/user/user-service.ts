@@ -11,6 +11,9 @@ export class UserService {
         private readonly db: sqlite3.Database
     ) { }
 
+    private _userId: string = ""
+    private _isGameStarted: Boolean = false
+
 
 
     createUser(user: newUserSet): User {
@@ -36,6 +39,53 @@ export class UserService {
         return newUSer
     }
 
+    async getUserWishlist(userId: string) {
+        if (!this._isGameStarted) {
+            throw Error("The game hasn't started yet")
+        }
+
+        if (this._isGameStarted) {
+            var promise = new Promise((res, rej) => {
+                const sql = this.db.get('SELECT reciever_id FROM partners WHERE giver_id =?',
+                    [userId],
+                    (err, row) => {
+                        if (err) {
+                            throw Error("This user is not registered")
+                        }
+                        this._userId = row.reciever_id
+
+                        res(this._userId)
+                    })
+            }).then(user => {
+                const sql = this.db.get('SELECT * FROM users WHERE id =?',
+                    [user],
+                    (err, row) => {
+                        if (err) {
+                            throw Error("This user is not registered")
+                        }
+                        return row
+                    })
+            })
+            await promise
+            return promise
+        }
+        return
+    }
+
+    async findUser(id: string) {
+        var promise = new Promise((res, rej) => {
+            const sql = this.db.run('SELECT * FROM users WHERE id=?',
+                [id],
+                (err) => {
+                    if (err) {
+                        throw Error("this user is not registered")
+                    }
+                    res(sql)
+                })
+        })
+        await promise
+    }
+
     getCountOfUsers() {
         const sql = 'SELECT COUNT (*) AS cnt FROM users'
         var count
@@ -58,5 +108,9 @@ export class UserService {
         } else {
             return true
         }
+    }
+
+    changeGameCondition(condition: Boolean) {
+        this._isGameStarted = condition
     }
 }

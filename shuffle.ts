@@ -1,18 +1,22 @@
 import sqlite3 from "sqlite3"
 import { User } from "./src/user/user-interface"
+import { UserService } from "./src/user/user-service"
 
 export class Shuffle {
 
     constructor(
-        private readonly db: sqlite3.Database
+        private readonly db: sqlite3.Database,
+        private readonly userService: UserService
     ) { }
+
+
 
     private _members: String[] = []
     private _isActiveShuffle: Boolean = true
 
     async start() {
         // this.db.run('CREATE TABLE partners (giver_id text, reciever_id text)')
-
+        this.userService.changeGameCondition(true)
         const sql = ('SELECT id FROM users')
 
         var result = new Promise((res, rej) => {
@@ -21,7 +25,7 @@ export class Shuffle {
                     return console.error(err.message);
                 }
                 this._members = rows.map(c => c["id"])
-                console.log(this._members)
+
                 res(rows)
             })
         })
