@@ -44,11 +44,17 @@ async function main() {
         res.contentType("json")
         res.end(JSON.stringify(a))
     })
+    app.post("/delete", (_req, res) => {
+        db.run("DELETE FROM partners")
 
-    app.get("/users/:id", (req, res) => {
-        userService.getUserWishlist(req.params.id)
+    })
 
-        res.end()
+    app.get("/users/:id", async (req, res) => {
+        const user = userService.getUserWishlist(req.params.id)
+        await user
+
+        res.contentType("json")
+        res.end(JSON.stringify(user))
     })
 
     app.listen(3000, () => console.log("runnin"))

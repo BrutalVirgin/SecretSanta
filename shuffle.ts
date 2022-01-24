@@ -33,9 +33,13 @@ export class Shuffle {
         this.makeShuffle(this._members)
     }
 
-    async makeShuffle(members: String[]) {
+    async makeShuffle(members: String[]): Promise<void> {
         if (this._isActiveShuffle === false) {
             throw Error("You can`t shuffle players second time")
+        }
+
+        if (await this.userService.getCountOfUsers() < 3 || await this.userService.getCountOfUsers() > 500) {
+            throw Error("The game can be played from 3 to 500 players")
         }
 
         if (this._isActiveShuffle === true) {
@@ -64,6 +68,5 @@ export class Shuffle {
             console.log("Added partners")
             this._isActiveShuffle = false
         }
-
     }
 }

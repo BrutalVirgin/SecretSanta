@@ -24,7 +24,7 @@ export class UserService {
             wishlist: user.wishlist
         }
 
-        console.log(this.getCountOfUsers())
+        this.getCountOfUsers()
 
         if (this.WishlistValidator(newUSer.wishlist)) {
             this.db.run('INSERT INTO users(id, first_name, last_name, wishlist) VALUES(?, ?, ?, ?)',
@@ -39,37 +39,56 @@ export class UserService {
         return newUSer
     }
 
-    async getUserWishlist(userId: string) {
+    async getUserWishlist(userId: string): Promise<Object> {
         if (!this._isGameStarted) {
             throw Error("The game hasn't started yet")
         }
 
-        if (this._isGameStarted) {
-            var promise = new Promise((res, rej) => {
-                const sql = this.db.get('SELECT reciever_id FROM partners WHERE giver_id =?',
-                    [userId],
-                    (err, row) => {
-                        if (err) {
-                            throw Error("This user is not registered")
-                        }
-                        this._userId = row.reciever_id
+        var user: Object = {}
 
-                        res(this._userId)
-                    })
-            }).then(user => {
-                const sql = this.db.get('SELECT * FROM users WHERE id =?',
-                    [user],
+        if (this._isGameStarted) {
+            // var promise = new Promise((res, rej) => {
+            //     const sql = this.db.get('SELECT reciever_id FROM partners WHERE giver_id =?',
+            //         [userId],
+            //         (err, row) => {
+            //             if (err) {
+            //                 throw Error("This user is not registered")
+            //             }
+            //             this._userId = row.reciever_id
+
+            //             res(this._userId)
+            //         })
+            // }).then(user => {
+            //     const sql = this.db.get('SELECT * FROM users WHERE id =?',
+            //         [user],
+            //         (err, row) => {
+            //             if (err) {
+            //                 throw Error("This user is not registered")
+            //             }
+            //             return row
+            //         })
+            // })
+            // await promise
+            // return promise
+
+            const sql = `SELECT users.first_name, users.last_name, users.wishlist
+            FROM partners 
+            LEFT JOIN users ON partners.reciever_id = users.id
+            WHERE partners.giver_id=?`
+            var promise = await new Promise((res, rej) => {
+                this.db.get(sql, [userId],
                     (err, row) => {
                         if (err) {
-                            throw Error("This user is not registered")
+                            return Error("This user is not registered")
                         }
-                        return row
+                        res(row)
+                        return user = row
                     })
+            }).then(e => {
+                return e
             })
-            await promise
-            return promise
         }
-        return
+        return user
     }
 
     async findUser(id: string) {
@@ -86,16 +105,20 @@ export class UserService {
         await promise
     }
 
-    getCountOfUsers() {
+    async getCountOfUsers(): Promise<number> {
         const sql = 'SELECT COUNT (*) AS cnt FROM users'
-        var count
-        this.db.get(sql, [], (err, row) => {
-            if (err) {
-                return console.error(err.message);
-            }
-            console.log(row["cnt"])
-            return count = row["cnt"]
+        var count = 0
+
+        var promise = new Promise((res, rej) => {
+            this.db.get(sql, [], (err, row) => {
+                if (err) {
+                    return console.error(err.message);
+                }
+                res(sql)
+                return count = row["cnt"]
+            })
         })
+        await promise
         return count
     }
 
