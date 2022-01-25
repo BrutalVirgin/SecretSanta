@@ -30,16 +30,28 @@ export class Shuffle {
             })
         })
         await result
-        this.makeShuffle(this._members)
-    }
-
-    async makeShuffle(members: String[]): Promise<void> {
-        if (this._isActiveShuffle === false) {
-            throw Error("You can`t shuffle players second time")
-        }
 
         if (await this.userService.getCountOfUsers() < 3 || await this.userService.getCountOfUsers() > 500) {
-            throw Error("The game can be played from 3 to 500 players")
+            return "The game can be played from 3 to 500 players"
+        } else {
+            const res = await this.makeShuffle(this._members)
+
+            var users = await this.userService.getCountOfUsers()
+            var partners = await this.userService.getCountOfPartners()
+
+            //To avoid a situation where the player did not get a pair 
+            while (users !== partners) {
+                this.db.run("DELETE FROM partners")
+                this.makeShuffle(this._members)
+            }
+            this._isActiveShuffle = false
+            return res
+        }
+    }
+
+    async makeShuffle(members: String[]): Promise<string> {
+        if (this._isActiveShuffle === false) {
+            return "You can`t shuffle players second time"
         }
 
         if (this._isActiveShuffle === true) {
@@ -65,8 +77,7 @@ export class Shuffle {
                 })
                 await promise
             }
-            console.log("Added partners")
-            this._isActiveShuffle = false
         }
+        return "All players are shuffled"
     }
 }

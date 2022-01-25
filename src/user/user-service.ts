@@ -16,7 +16,7 @@ export class UserService {
 
 
 
-    createUser(user: newUserSet): User {
+    createUser(user: newUserSet): User | null {
         const newUSer = {
             id: uuidv4(),
             first_name: user.first_name,
@@ -36,46 +36,26 @@ export class UserService {
                     console.log(`Added info`)
                 })
         }
+        if (!this.WishlistValidator(newUSer.wishlist)) {
+            return null
+        }
         return newUSer
     }
 
     async getUserWishlist(userId: string): Promise<Object> {
         if (!this._isGameStarted) {
-            throw Error("The game hasn't started yet")
+            return "The game hasn't started yet"
         }
 
         var user: Object = {}
 
         if (this._isGameStarted) {
-            // var promise = new Promise((res, rej) => {
-            //     const sql = this.db.get('SELECT reciever_id FROM partners WHERE giver_id =?',
-            //         [userId],
-            //         (err, row) => {
-            //             if (err) {
-            //                 throw Error("This user is not registered")
-            //             }
-            //             this._userId = row.reciever_id
-
-            //             res(this._userId)
-            //         })
-            // }).then(user => {
-            //     const sql = this.db.get('SELECT * FROM users WHERE id =?',
-            //         [user],
-            //         (err, row) => {
-            //             if (err) {
-            //                 throw Error("This user is not registered")
-            //             }
-            //             return row
-            //         })
-            // })
-            // await promise
-            // return promise
-
             const sql = `SELECT users.first_name, users.last_name, users.wishlist
             FROM partners 
             LEFT JOIN users ON partners.reciever_id = users.id
             WHERE partners.giver_id=?`
-            var promise = await new Promise((res, rej) => {
+
+            await new Promise((res, rej) => {
                 this.db.get(sql, [userId],
                     (err, row) => {
                         if (err) {
@@ -89,20 +69,6 @@ export class UserService {
             })
         }
         return user
-    }
-
-    async findUser(id: string) {
-        var promise = new Promise((res, rej) => {
-            const sql = this.db.run('SELECT * FROM users WHERE id=?',
-                [id],
-                (err) => {
-                    if (err) {
-                        throw Error("this user is not registered")
-                    }
-                    res(sql)
-                })
-        })
-        await promise
     }
 
     async getCountOfUsers(): Promise<number> {
@@ -122,12 +88,27 @@ export class UserService {
         return count
     }
 
+    async getCountOfPartners(): Promise<number> {
+        const sql = 'SELECT COUNT (*) AS cnt FROM partners'
+
+        var count = 0
+
+        var promise = new Promise((res, rej) => {
+            this.db.get(sql, [], (err, row) => {
+                if (err) {
+                    return console.error(err.message);
+                }
+                res(sql)
+                return count = row["cnt"]
+            })
+        })
+        await promise
+        return count
+    }
+
     WishlistValidator(wishlist: string[]): Boolean {
-        if (wishlist.length === 0) {
-            throw Error("Write your wishes")
-        }
-        else if (wishlist.length > 10) {
-            throw Error("You can add only 10 wishes")
+        if (wishlist.length < 3 || wishlist.length > 10) {
+            return false
         } else {
             return true
         }

@@ -6,9 +6,6 @@ import { UserService } from "../src/user/user-service"
 import { Shuffle } from "../shuffle"
 
 
-
-// зарегистрировать участника имя, фамилия, список побажань
-
 async function main() {
     const app = express()
 
@@ -25,33 +22,36 @@ async function main() {
 
     app.use(express.json())
 
-    app.post("/users", (req, res) => {
+    app.post("/user", (req, res) => {
         const user = req.body
         if (validation(user)) {
-            userService.createUser(req.body)
+            if (userService.createUser(req.body)) {
+                return res.end("User created")
+            }
+
+            if (!userService.createUser(req.body)) {
+                res.end("You have to write 3 to 10 wishes")
+            }
+
         } else {
             res.statusCode = 400
-            res.send("err")
+            return res.end("Wrong user type")
         }
-
-        res.end()
     })
     // db.run('CREATE TABLE users (id text, first_name text, last_name text, wishlist text)')
 
-    app.post("/shuffle", (_req, res) => {
-        var a = shuffle.start()
+    app.post("/shuffle", async (_req, res) => {
+        const final = await shuffle.start()
 
         res.contentType("json")
-        res.end(JSON.stringify(a))
-    })
-    app.post("/delete", (_req, res) => {
-        db.run("DELETE FROM partners")
-
+        res.end(JSON.stringify(final))
     })
 
     app.get("/users/:id", async (req, res) => {
-        const user = userService.getUserWishlist(req.params.id)
-        await user
+        const user = await userService.getUserWishlist(req.params.id)
+        if (!user) {
+            res.end("Wrong user id")
+        }
 
         res.contentType("json")
         res.end(JSON.stringify(user))
