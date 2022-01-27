@@ -1,9 +1,8 @@
 import { User } from "./user-interface"
 import { v4 as uuidv4 } from 'uuid'
 import sqlite3 from "sqlite3"
-import e from "express"
 
-type newUserSet = Pick<User, "first_name" | "last_name" | "wishlist">
+type UserChangeSet = Pick<User, "first_name" | "last_name" | "wishlist">
 
 export class UserService {
 
@@ -11,43 +10,37 @@ export class UserService {
         private readonly db: sqlite3.Database
     ) { }
 
-    private _userId: string = ""
     private _isGameStarted: Boolean = false
 
-
-
-    createUser(user: newUserSet): User | null {
+    createUser(user: UserChangeSet): User | undefined {
         const newUSer = {
             id: uuidv4(),
             first_name: user.first_name,
             last_name: user.last_name,
             wishlist: user.wishlist
         }
-
-        this.getCountOfUsers()
+        const sql = `INSERT INTO users(id, first_name, last_name, wishlist) 
+        VALUES(?, ?, ?, ?)`
 
         if (this.WishlistValidator(newUSer.wishlist)) {
-            this.db.run('INSERT INTO users(id, first_name, last_name, wishlist) VALUES(?, ?, ?, ?)',
-                [uuidv4(), user.first_name, user.last_name, user.wishlist],
+            this.db.run(sql, [uuidv4(), user.first_name, user.last_name, user.wishlist],
                 (err) => {
                     if (err) {
                         return console.log(err.message)
                     }
                     console.log(`Added info`)
+                    return newUSer
                 })
+        } else {
+            throw new Error("You have to write 3 to 10 wishes")
         }
-        if (!this.WishlistValidator(newUSer.wishlist)) {
-            return null
-        }
-        return newUSer
+        return
     }
 
-    async getUserWishlist(userId: string): Promise<Object> {
+    async getUserWishlist(userId: string): Promise<User | undefined> {
         if (!this._isGameStarted) {
-            return "The game hasn't started yet"
+            throw new Error("The game hasn't started yet")
         }
-
-        var user: Object = {}
 
         if (this._isGameStarted) {
             const sql = `SELECT users.first_name, users.last_name, users.wishlist
@@ -55,55 +48,39 @@ export class UserService {
             LEFT JOIN users ON partners.reciever_id = users.id
             WHERE partners.giver_id=?`
 
-            await new Promise((res, rej) => {
-                this.db.get(sql, [userId],
-                    (err, row) => {
-                        if (err) {
-                            return Error("This user is not registered")
-                        }
-                        res(row)
-                        return user = row
-                    })
-            }).then(e => {
-                return e
+            const promise = new Promise<User>((res, rej) => {
+                this.db.get(sql, [userId], (err, row: User) => {
+                    if (err === null) rej(new Error("This user is not registered"))
+                    else res(row)
+                })
             })
+            return promise
         }
-        return user
+        return
     }
 
     async getCountOfUsers(): Promise<number> {
         const sql = 'SELECT COUNT (*) AS cnt FROM users'
-        var count = 0
 
-        var promise = new Promise((res, rej) => {
+        const promise = new Promise<number>((res, rej) => {
             this.db.get(sql, [], (err, row) => {
-                if (err) {
-                    return console.error(err.message);
-                }
-                res(sql)
-                return count = row["cnt"]
+                if (err) rej(new Error(err.message))
+                res(row["cnt"])
             })
         })
-        await promise
-        return count
+        return promise
     }
 
     async getCountOfPartners(): Promise<number> {
         const sql = 'SELECT COUNT (*) AS cnt FROM partners'
 
-        var count = 0
-
-        var promise = new Promise((res, rej) => {
+        var promise = new Promise<number>((res, rej) => {
             this.db.get(sql, [], (err, row) => {
-                if (err) {
-                    return console.error(err.message);
-                }
-                res(sql)
-                return count = row["cnt"]
+                if (err) rej(new Error(err.message))
+                res(row["cnt"])
             })
         })
-        await promise
-        return count
+        return promise
     }
 
     WishlistValidator(wishlist: string[]): Boolean {

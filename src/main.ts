@@ -1,9 +1,7 @@
-import e from "express"
 import express from "express"
 import sqlite3 from "sqlite3"
-import { stringify } from "uuid"
 import { UserService } from "../src/user/user-service"
-import { Shuffle } from "../shuffle"
+import { Shuffle } from "../core/shuffle"
 
 
 async function main() {
@@ -25,14 +23,13 @@ async function main() {
     app.post("/user", (req, res) => {
         const user = req.body
         if (validation(user)) {
-            if (userService.createUser(req.body)) {
+            try {
+                userService.createUser(req.body)
+
                 return res.end("User created")
+            } catch (e: any) {
+                res.end(e.message)
             }
-
-            if (!userService.createUser(req.body)) {
-                res.end("You have to write 3 to 10 wishes")
-            }
-
         } else {
             res.statusCode = 400
             return res.end("Wrong user type")
@@ -47,14 +44,19 @@ async function main() {
         res.end(JSON.stringify(final))
     })
 
-    app.get("/users/:id", async (req, res) => {
-        const user = await userService.getUserWishlist(req.params.id)
-        if (!user) {
-            res.end("Wrong user id")
-        }
+    app.post("/delete", async (_req, res) => {
+        db.run('DELETE FROM partners')
+    })
 
-        res.contentType("json")
-        res.end(JSON.stringify(user))
+    app.get("/users/:id", async (req, res) => {
+        try {
+            const userWishList = await userService.getUserWishlist(req.params.id)
+
+            res.contentType("json")
+            res.end(JSON.stringify(userWishList))
+        } catch (e: any) {
+            res.end(e.message)
+        }
     })
 
     app.listen(3000, () => console.log("runnin"))

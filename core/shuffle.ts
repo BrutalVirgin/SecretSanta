@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3"
-import { User } from "./src/user/user-interface"
-import { UserService } from "./src/user/user-service"
+import { User } from "../src/user/user-interface"
+import { UserService } from "../src/user/user-service"
 
 export class Shuffle {
 
