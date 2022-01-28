@@ -21,63 +21,74 @@ export class Shuffle {
 
         var result = new Promise((res, rej) => {
             this.db.all(sql, [], async (err, rows: User[]) => {
-                if (err) {
-                    return console.error(err.message);
-                }
-                this._members = rows.map(c => c["id"])
+                if (err) rej(err.message)
 
-                res(rows)
+                this._members = rows.map(c => c["id"])
+                res(this._members)
             })
         })
         await result
 
         if (await this.userService.getCountOfUsers() < 3 || await this.userService.getCountOfUsers() > 500) {
-            return "The game can be played from 3 to 500 players"
+            throw new Error("The game can be played from 3 to 500 players")
         } else {
-            const res = await this.makeShuffle(this._members)
+            await this.makeShuffle(this._members)
 
             var users = await this.userService.getCountOfUsers()
             var partners = await this.userService.getCountOfPartners()
 
+
             //To avoid a situation where the player did not get a pair 
             while (users !== partners) {
-                this.db.run("DELETE FROM partners")
-                this.makeShuffle(this._members)
+                await this.deletePartnersTable()
+                // this.makeShuffle(this._members)
+                this.start()
             }
             this._isActiveShuffle = false
-            return res
         }
     }
 
-    async makeShuffle(members: String[]): Promise<string> {
+    async deletePartnersTable() {
+        const promise = new Promise((res, rej) => {
+            var sql = this.db.run("DELETE FROM partners", [], (err) => {
+                if (err) rej(err.message)
+
+                res(sql)
+            })
+        })
+        await promise
+    }
+
+    async makeShuffle(members: String[]) {
         if (this._isActiveShuffle === false) {
-            return "You can`t shuffle players second time"
-        }
+            throw new Error("You can`t shuffle players second time")
+        } else {
+            block: {
+                var recievers = members.slice()
 
-        if (this._isActiveShuffle === true) {
-            var recievers = members.slice()
+                for (var i = 0; i < members.length; i++) {
+                    var curMember = members[i]
+                    var recieverIndex = Math.floor(Math.random() * recievers.length)
+                    while (recievers[recieverIndex] === curMember) {
+                        if (await this.userService.getCountOfPartners() === members.length - 1) {
+                            break block
+                        } else {
+                            recieverIndex = Math.floor(Math.random() * recievers.length)
+                        }
+                    }
+                    var reciever = recievers.splice(recieverIndex, 1)[0]
 
-            for (var i = 0; i < members.length; i++) {
-                var curMember = members[i]
-                var recieverIndex = Math.floor(Math.random() * recievers.length)
-                while (recievers[recieverIndex] === curMember) {
-                    recieverIndex = Math.floor(Math.random() * recievers.length);
+                    var promise = new Promise((res, rej) => {
+                        var sql = this.db.run('INSERT INTO partners(giver_id, reciever_id) VALUES(?, ?)',
+                            [curMember, reciever], (err) => {
+                                if (err) rej(err.message)
+
+                                res(sql)
+                            })
+                    })
+                    await promise
                 }
-                var reciever = recievers.splice(recieverIndex, 1)[0]
-
-                var promise = new Promise((res, rej) => {
-                    var sql = this.db.run('INSERT INTO partners(giver_id, reciever_id) VALUES(?, ?)',
-                        [curMember, reciever],
-                        (err) => {
-                            if (err) {
-                                return console.log(err.message)
-                            }
-                            res(sql)
-                        })
-                })
-                await promise
             }
         }
-        return "All players are shuffled"
     }
 }

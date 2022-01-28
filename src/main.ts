@@ -26,7 +26,7 @@ async function main() {
             try {
                 userService.createUser(req.body)
 
-                return res.end("User created")
+                res.end("User created")
             } catch (e: any) {
                 res.end(e.message)
             }
@@ -38,22 +38,32 @@ async function main() {
     // db.run('CREATE TABLE users (id text, first_name text, last_name text, wishlist text)')
 
     app.post("/shuffle", async (_req, res) => {
-        const final = await shuffle.start()
+        try {
+            const final = await shuffle.start()
 
-        res.contentType("json")
-        res.end(JSON.stringify(final))
+            // res.contentType("json")
+            res.end("All players are shuffled")
+        } catch (e: any) {
+            res.end(e.message)
+        }
     })
 
     app.post("/delete", async (_req, res) => {
         db.run('DELETE FROM partners')
+        db.run('DELETE FROM users')
+
+        res.end()
     })
 
     app.get("/users/:id", async (req, res) => {
         try {
             const userWishList = await userService.getUserWishlist(req.params.id)
-
-            res.contentType("json")
-            res.end(JSON.stringify(userWishList))
+            if (userWishList) {
+                res.contentType("json")
+                res.end(JSON.stringify(userWishList))
+            } else {
+                res.end("This user is not registered")
+            }
         } catch (e: any) {
             res.end(e.message)
         }

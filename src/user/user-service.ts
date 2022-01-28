@@ -50,8 +50,8 @@ export class UserService {
 
             const promise = new Promise<User>((res, rej) => {
                 this.db.get(sql, [userId], (err, row: User) => {
-                    if (err === null) rej(new Error("This user is not registered"))
-                    else res(row)
+                    if (err) rej(new Error(err.message))
+                    res(row)
                 })
             })
             return promise
