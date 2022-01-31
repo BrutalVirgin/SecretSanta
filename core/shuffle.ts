@@ -16,7 +16,7 @@ export class Shuffle {
 
     async start() {
         // this.db.run('CREATE TABLE partners (giver_id text, reciever_id text)')
-        this.userService.changeGameCondition(true)
+
         const sql = ('SELECT id FROM users')
 
         var result = new Promise((res, rej) => {
@@ -32,11 +32,15 @@ export class Shuffle {
         if (await this.userService.getCountOfUsers() < 3 || await this.userService.getCountOfUsers() >= 500) {
             throw new Error("The game can be played from 3 to 500 players")
         } else {
+            this.userService.changeGameCondition(true)
             await this.makeShuffle(this._members)
+
+            this._isActiveShuffle = false
+
+            /** The second version of the shuffle */
 
             // var users = await this.userService.getCountOfUsers()
             // var partners = await this.userService.getCountOfPartners()
-
 
             // //To avoid a situation where the player did not get a pair 
             // while (users !== partners) {
@@ -44,7 +48,6 @@ export class Shuffle {
             //     // this.makeShuffle(this._members)
             //     this.start()
             // }
-            this._isActiveShuffle = false
         }
     }
 
@@ -83,6 +86,7 @@ export class Shuffle {
                 }
 
             }
+            /** The second version of the shuffle */
 
             // for (var i = 0; i < members.length; i++) {
             //     var curMember = members[i]

@@ -35,6 +35,7 @@ async function main() {
             return res.end("Wrong user type")
         }
     })
+
     // db.run('CREATE TABLE users (id text, first_name text, last_name text, wishlist text)')
 
     app.post("/shuffle", async (_req, res) => {
@@ -46,13 +47,6 @@ async function main() {
         } catch (e: any) {
             res.end(e.message)
         }
-    })
-
-    app.post("/delete", async (_req, res) => {
-        db.run('DELETE FROM partners')
-        db.run('DELETE FROM users')
-
-        res.end()
     })
 
     app.get("/users/:id", async (req, res) => {
@@ -73,8 +67,8 @@ async function main() {
 }
 
 function validation(user: any) {
-    if (user["first_name"] != null && typeof (user.first_name) === "string") {
-        if (user["last_name"] != null && typeof (user.last_name) === "string") {
+    if (user["first_name"] != null && typeof (user.first_name) === "string" && user["first_name"] != "") {
+        if (user["last_name"] != null && typeof (user.last_name) === "string" && user["last_name"] != "") {
             if (user["wishlist"] != null && typeof (user.wishlist) === "object") {
                 return true
             } else {

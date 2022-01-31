@@ -38,33 +38,11 @@ export class UserService {
                 throw new Error("You have to write 3 to 10 wishes")
             }
         }
-
-        // const newUSer = {
-        //     id: uuidv4(),
-        //     first_name: user.first_name,
-        //     last_name: user.last_name,
-        //     wishlist: user.wishlist
-        // }
-        // const sql = `INSERT INTO users(id, first_name, last_name, wishlist) 
-        // VALUES(?, ?, ?, ?)`
-
-        // if (this.WishlistValidator(newUSer.wishlist)) {
-        //     this.db.run(sql, [uuidv4(), user.first_name, user.last_name, user.wishlist],
-        //         (err) => {
-        //             if (err) {
-        //                 return console.log(err.message)
-        //             }
-        //             console.log(`Added info`)
-        //             return newUSer
-        //         })
-        // } else {
-        //     throw new Error("You have to write 3 to 10 wishes")
-        // }
         return
     }
 
     async getUserWishlist(userId: string): Promise<User | undefined> {
-        if (!this._isGameStarted) {
+        if (this._isGameStarted === false) {
             throw new Error("The game hasn't started yet")
         } else {
             const sql = `SELECT users.first_name, users.last_name, users.wishlist
