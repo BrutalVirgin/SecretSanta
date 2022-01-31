@@ -11,7 +11,7 @@ export class Shuffle {
 
 
 
-    private _members: String[] = []
+    private _members: string[] = []
     private _isActiveShuffle: Boolean = true
 
     async start() {
@@ -29,21 +29,21 @@ export class Shuffle {
         })
         await result
 
-        if (await this.userService.getCountOfUsers() < 3 || await this.userService.getCountOfUsers() > 500) {
+        if (await this.userService.getCountOfUsers() < 3 || await this.userService.getCountOfUsers() >= 500) {
             throw new Error("The game can be played from 3 to 500 players")
         } else {
             await this.makeShuffle(this._members)
 
-            var users = await this.userService.getCountOfUsers()
-            var partners = await this.userService.getCountOfPartners()
+            // var users = await this.userService.getCountOfUsers()
+            // var partners = await this.userService.getCountOfPartners()
 
 
-            //To avoid a situation where the player did not get a pair 
-            while (users !== partners) {
-                await this.deletePartnersTable()
-                // this.makeShuffle(this._members)
-                this.start()
-            }
+            // //To avoid a situation where the player did not get a pair 
+            // while (users !== partners) {
+            //     await this.deletePartnersTable()
+            //     // this.makeShuffle(this._members)
+            //     this.start()
+            // }
             this._isActiveShuffle = false
         }
     }
@@ -59,36 +59,65 @@ export class Shuffle {
         await promise
     }
 
-    async makeShuffle(members: String[]) {
+    async makeShuffle(members: string[]) {
         if (this._isActiveShuffle === false) {
             throw new Error("You can`t shuffle players second time")
         } else {
-            block: {
-                var recievers = members.slice()
 
-                for (var i = 0; i < members.length; i++) {
-                    var curMember = members[i]
-                    var recieverIndex = Math.floor(Math.random() * recievers.length)
-                    while (recievers[recieverIndex] === curMember) {
-                        if (await this.userService.getCountOfPartners() === members.length - 1) {
-                            break block
-                        } else {
-                            recieverIndex = Math.floor(Math.random() * recievers.length)
-                        }
-                    }
-                    var reciever = recievers.splice(recieverIndex, 1)[0]
+            var recievers = members.slice()
+            var currentIndex = recievers.length
 
-                    var promise = new Promise((res, rej) => {
-                        var sql = this.db.run('INSERT INTO partners(giver_id, reciever_id) VALUES(?, ?)',
-                            [curMember, reciever], (err) => {
-                                if (err) rej(err.message)
+            while (currentIndex != 0) {
+                var randomIndex = Math.floor(Math.random() * currentIndex)
+                currentIndex--
 
-                                res(sql)
-                            })
-                    })
-                    await promise
-                }
+                [recievers[currentIndex], recievers[randomIndex]] = [
+                    recievers[randomIndex], recievers[currentIndex]]
             }
+
+            for (var i = 0; i < recievers.length; i++) {
+                if (i === recievers.length - 1) {
+                    await this.insertPartners(recievers[i], recievers[0])
+                } else {
+                    await this.insertPartners(recievers[i], recievers[i + 1])
+                }
+
+            }
+
+            // for (var i = 0; i < members.length; i++) {
+            //     var curMember = members[i]
+            //     var recieverIndex = Math.floor(Math.random() * recievers.length)
+            //     while (recievers[recieverIndex] === curMember) {
+            //         if (await this.userService.getCountOfPartners() === members.length - 1) {
+            //             break
+            //         } else {
+            //             recieverIndex = Math.floor(Math.random() * recievers.length)
+            //         }
+            //     }
+            //     var reciever = recievers.splice(recieverIndex, 1)[0]
+
+            // var promise = new Promise((res, rej) => {
+            //     var sql = this.db.run('INSERT INTO partners(giver_id, reciever_id) VALUES(?, ?)',
+            //         [curMember, reciever], (err) => {
+            //             if (err) rej(err.message)
+
+            //             res(sql)
+            //         })
+            // })
+            // await promise
         }
     }
+
+    async insertPartners(curMember: string, reciever: string) {
+        var promise = new Promise((res, rej) => {
+            var sql = this.db.run('INSERT INTO partners(giver_id, reciever_id) VALUES(?, ?)',
+                [curMember, reciever], (err) => {
+                    if (err) rej(err.message)
+
+                    res(sql)
+                })
+        })
+        await promise
+    }
 }
+

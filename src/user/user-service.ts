@@ -13,36 +13,60 @@ export class UserService {
     private _isGameStarted: Boolean = false
 
     createUser(user: UserChangeSet): User | undefined {
-        const newUSer = {
-            id: uuidv4(),
-            first_name: user.first_name,
-            last_name: user.last_name,
-            wishlist: user.wishlist
-        }
-        const sql = `INSERT INTO users(id, first_name, last_name, wishlist) 
-        VALUES(?, ?, ?, ?)`
-
-        if (this.WishlistValidator(newUSer.wishlist)) {
-            this.db.run(sql, [uuidv4(), user.first_name, user.last_name, user.wishlist],
-                (err) => {
-                    if (err) {
-                        return console.log(err.message)
-                    }
-                    console.log(`Added info`)
-                    return newUSer
-                })
+        if (this._isGameStarted === true) {
+            throw new Error("You cannot add new players after the game has started")
         } else {
-            throw new Error("You have to write 3 to 10 wishes")
+            const newUSer = {
+                id: uuidv4(),
+                first_name: user.first_name,
+                last_name: user.last_name,
+                wishlist: user.wishlist
+            }
+            const sql = `INSERT INTO users(id, first_name, last_name, wishlist) 
+            VALUES(?, ?, ?, ?)`
+
+            if (this.WishlistValidator(newUSer.wishlist)) {
+                this.db.run(sql, [uuidv4(), user.first_name, user.last_name, user.wishlist],
+                    (err) => {
+                        if (err) {
+                            return console.log(err.message)
+                        }
+                        console.log(`Added info`)
+                        return newUSer
+                    })
+            } else {
+                throw new Error("You have to write 3 to 10 wishes")
+            }
         }
+
+        // const newUSer = {
+        //     id: uuidv4(),
+        //     first_name: user.first_name,
+        //     last_name: user.last_name,
+        //     wishlist: user.wishlist
+        // }
+        // const sql = `INSERT INTO users(id, first_name, last_name, wishlist) 
+        // VALUES(?, ?, ?, ?)`
+
+        // if (this.WishlistValidator(newUSer.wishlist)) {
+        //     this.db.run(sql, [uuidv4(), user.first_name, user.last_name, user.wishlist],
+        //         (err) => {
+        //             if (err) {
+        //                 return console.log(err.message)
+        //             }
+        //             console.log(`Added info`)
+        //             return newUSer
+        //         })
+        // } else {
+        //     throw new Error("You have to write 3 to 10 wishes")
+        // }
         return
     }
 
     async getUserWishlist(userId: string): Promise<User | undefined> {
         if (!this._isGameStarted) {
             throw new Error("The game hasn't started yet")
-        }
-
-        if (this._isGameStarted) {
+        } else {
             const sql = `SELECT users.first_name, users.last_name, users.wishlist
             FROM partners 
             LEFT JOIN users ON partners.reciever_id = users.id
@@ -56,7 +80,6 @@ export class UserService {
             })
             return promise
         }
-        return
     }
 
     async getCountOfUsers(): Promise<number> {
